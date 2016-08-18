@@ -4,7 +4,6 @@ from __future__ import absolute_import
 from keras import backend as K
 from keras.engine import Layer, InputSpec
 # imports for backwards namespace compatibility
-
 class Cropping2D(Layer):
     '''Cropping layer for 2D input (e.g. picture).
 
@@ -34,7 +33,7 @@ class Cropping2D(Layer):
         self.input_spec = [InputSpec(ndim=4)]        
 
     def build(self, input_shape):
-        pass
+        self.input_spec = [InputSpec(shape=input_shape)]
 
     def get_output_shape_for(self, input_shape):
         if self.dim_ordering == 'th':
@@ -52,8 +51,8 @@ class Cropping2D(Layer):
             raise Exception('Invalid dim_ordering: ' + self.dim_ordering)
 
     def call(self, x, mask=None):
-        
-        return x[:, :, self.cropping[0][0]:x._keras_shape[2]-self.cropping[0][1], self.cropping[1][0]:x._keras_shape[3]-self.cropping[1][1]]
+        input_shape = self.input_spec[0].shape
+        return x[:, :, self.cropping[0][0]:input_shape[2]-self.cropping[0][1], self.cropping[1][0]:input_shape[3]-self.cropping[1][1]]
 
     def get_config(self):
         config = {'cropping': self.padding}
