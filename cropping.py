@@ -4,8 +4,10 @@ from __future__ import absolute_import
 from keras import backend as K
 from keras.engine import Layer, InputSpec
 # imports for backwards namespace compatibility
+
 class Cropping1D(Layer):
     '''Cropping layer for 1D input (e.g. temporal sequence).
+    It crops along the time dimension (axis 1).
 
     # Arguments
         cropping: tuple of int (length 2)
@@ -17,12 +19,10 @@ class Cropping1D(Layer):
 
     # Output shape
        3D tensor with shape (samples, cropped_axis, features)
-
-    
     '''
 
-    def __init__(self, cropping=(1,1), **kwargs):
-        super(Cropping2D, self).__init__(**kwargs)
+    def __init__(self, cropping=(1, 1), **kwargs):
+        super(Cropping1D, self).__init__(**kwargs)
         self.cropping = cropping
         self.input_spec = [InputSpec(ndim=3)] # redundant due to build()?       
 
@@ -30,27 +30,28 @@ class Cropping1D(Layer):
         self.input_spec = [InputSpec(shape=input_shape)]
 
     def get_output_shape_for(self, input_shape):
-        length = input_shape[1] - self.cropping[0][0] - self.cropping[0][1] if input_shape[1] is not None else None
+        length = input_shape[1] - self.cropping[0] - self.cropping[1] if input_shape[1] is not None else None
         return (input_shape[0],
                 length,
                 input_shape[2])
 
     def call(self, x, mask=None):
         input_shape = self.input_spec[0].shape
-        return x[:, self.cropping[0][0]:input_shape[1]-self.cropping[0][1], :]
+        return x[:, self.cropping[0]:input_shape[1]-self.cropping[1], :]
 
     def get_config(self):
-        config = {'cropping': self.padding}
+        config = {'cropping': self.cropping}
         base_config = super(Cropping2D, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
 class Cropping2D(Layer):
     '''Cropping layer for 2D input (e.g. picture).
+    It crops along spatial dimensions, i.e. width and height.
 
     # Arguments
-        padding: tuple of tuple of int (length 2)
+        cropping: tuple of tuple of int (length 2)
             How many should be trimmed off at the beginning and end of
-            the 2 padding dimensions (axis 3 and 4).
+            the 2 cropping dimensions (width, height).
         dim_ordering: 'th' or 'tf'.
             In 'th' mode, the channels dimension (the depth)
             is at index 1, in 'tf' mode is it at index 3.
@@ -66,10 +67,22 @@ class Cropping2D(Layer):
         4D tensor with shape:
         (samples, depth, first_cropped_axis, second_cropped_axis)
 
-    
+    # Examples
+
+    ```python
+        # crop the input image and feature meps
+        model = Sequential()
+        model.add(Cropping2D(cropping=((2, 2), (4, 4)), input_shape=(3, 28, 28)))
+        # now model.output_shape == (None, 3, 24, 20)
+        model.add(Convolution2D(64, 3, 3, border_mode='same))
+        model.add(Cropping2D(cropping=((2, 2), (2, 2))))
+        # now model.output_shape == (None, 64, 20, 16)
+
+    ```
+
     '''
 
-    def __init__(self, cropping=((0,0),(0,0)), dim_ordering='default', **kwargs):
+    def __init__(self, cropping=((0, 0), (0, 0)), dim_ordering='default', **kwargs):
         super(Cropping2D, self).__init__(**kwargs)
         if dim_ordering == 'default':
             dim_ordering = K.image_dim_ordering()
@@ -83,7 +96,6 @@ class Cropping2D(Layer):
 
     def get_output_shape_for(self, input_shape):
         if self.dim_ordering == 'th':
-            
             return (input_shape[0],
                     input_shape[1],
                     input_shape[2] - self.cropping[0][0] - self.cropping[0][1],
@@ -98,10 +110,13 @@ class Cropping2D(Layer):
 
     def call(self, x, mask=None):
         input_shape = self.input_spec[0].shape
-        return x[:, :, self.cropping[0][0]:input_shape[2]-self.cropping[0][1], self.cropping[1][0]:input_shape[3]-self.cropping[1][1]]
+        if self.dim_ordering == 'th':
+            return x[:, :, self.cropping[0][0]:input_shape[2]-self.cropping[0][1], self.cropping[1][0]:input_shape[3]-self.cropping[1][1]]
+        elif self.dim_ordering == 'tf':
+            return x[:, self.cropping[0][0]:input_shape[1]-self.cropping[0][1], self.cropping[1][0]:input_shape[2]-self.cropping[1][1], :]
 
     def get_config(self):
-        config = {'cropping': self.padding}
+        config = {'cropping': self.cropping}
         base_config = super(Cropping2D, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
@@ -109,9 +124,9 @@ class Cropping3D(Layer):
     '''Cropping layer for 2D input (e.g. picture).
 
     # Arguments
-        padding: tuple of tuple of int (length 2)
+        cropping: tuple of tuple of int (length 3)
             How many should be trimmed off at the beginning and end of
-            the 2 padding dimensions (axis 3 and 4).
+            the 3 cropping dimensions (kernel_dim1, kernel_dim2, kernerl_dim3).
         dim_ordering: 'th' or 'tf'.
             In 'th' mode, the channels dimension (the depth)
             is at index 1, in 'tf' mode is it at index 4.
@@ -129,8 +144,8 @@ class Cropping3D(Layer):
     
     '''
 
-    def __init__(self, cropping=((1,1),(1,1),(1,1)), dim_ordering='default', **kwargs):
-        super(Cropping2D, self).__init__(**kwargs)
+    def __init__(self, cropping=((1, 1), (1, 1), (1, 1)), dim_ordering='default', **kwargs):
+        super(Cropping3D, self).__init__(**kwargs)
         if dim_ordering == 'default':
             dim_ordering = K.image_dim_ordering()
         self.cropping = tuple(cropping)
@@ -171,7 +186,7 @@ class Cropping3D(Layer):
             return x[:, self.cropping[0][0]:input_shape[1]-self.cropping[0][1], self.cropping[1][0]:input_shape[2]-self.cropping[1][1], self.cropping[2][0]:input_shape[3]-self.cropping[2][1], :]
 
     def get_config(self):
-        config = {'cropping': self.padding}
+        config = {'cropping': self.cropping}
         base_config = super(Cropping2D, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
-    
+

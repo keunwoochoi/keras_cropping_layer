@@ -45,7 +45,7 @@ model.add(Convolution2D(nb_filters, nb_conv, nb_conv,
                         border_mode='same',
                         input_shape=(1, img_rows, img_cols)))
 
-model.add(cropping.Cropping2D(cropping=((2,2),(2,2)) ))
+model.add(cropping.Cropping2D(cropping=((2,2),(2,2))))
 model.add(Convolution2D(nb_filters, nb_conv, nb_conv,
                         border_mode='same'))
 model.add(Activation('relu'))
