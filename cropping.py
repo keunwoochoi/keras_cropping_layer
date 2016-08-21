@@ -18,7 +18,7 @@ class Cropping1D(Layer):
         3D tensor with shape (samples, axis_to_crop, features)
 
     # Output shape
-       3D tensor with shape (samples, cropped_axis, features)
+        3D tensor with shape (samples, cropped_axis, features)
     '''
 
     def __init__(self, cropping=(1, 1), **kwargs):
@@ -41,7 +41,7 @@ class Cropping1D(Layer):
 
     def get_config(self):
         config = {'cropping': self.cropping}
-        base_config = super(Cropping2D, self).get_config()
+        base_config = super(Cropping1D, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
 class Cropping2D(Layer):
@@ -187,6 +187,6 @@ class Cropping3D(Layer):
 
     def get_config(self):
         config = {'cropping': self.cropping}
-        base_config = super(Cropping2D, self).get_config()
+        base_config = super(Cropping3D, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
