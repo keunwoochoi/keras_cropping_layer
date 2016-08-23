@@ -1,6 +1,10 @@
 # keras_cropping_layer
 This is a cropping layer - a customised layer implementation in keras.
 
+# THIS LAYER IS MERGED IN KERAS SINCE 22 AUG 2016
+* [It is merged.](https://github.com/fchollet/keras/pull/3509) Have fun!
+* You can still check out the example code.
+
 ## What does it do?
 It crops out input 2d images. 
 `cropping.Cropping2D(cropping=((1,2),(3,4))` crops 1 pixel from top, 2 pixels from bottom, 3 pixels from left, and 4 pixels from right. 
